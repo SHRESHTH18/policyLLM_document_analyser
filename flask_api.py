@@ -1,7 +1,26 @@
 """
 Flask API server for RAG Pipeline with blob URL support
-Endpoint: POST /hackrx/run
+Optimized for Render deployment with lightweight dependencies
 """
+
+from flask import Flask, request, jsonify
+import requests
+import tempfile
+import os
+import logging
+import gc  # Garbage collection for memory management
+from io import BytesIO
+from pypdf import PdfReader
+from light_rag_pipeline import LightRAGPipeline
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+
+# Configuration for memory optimization
+app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024  # 8MB max (reduced from 16MB)
 
 from flask import Flask, request, jsonify
 import requests
@@ -10,7 +29,7 @@ import os
 import logging
 from io import BytesIO
 from pypdf import PdfReader
-from rag_pipeline import RAGPipeline
+from light_rag_pipeline import LightRAGPipeline
 
 # Try to import CORS, make it optional for development
 try:
@@ -132,16 +151,20 @@ def process_document_and_queries():
         # Step 1: Extract text directly from PDF URL (no download needed!)
         pdf_texts = extract_text_from_pdf_url(blob_url)
         
-        # Step 2: Initialize RAG pipeline
-        pipeline = RAGPipeline()
+        # Step 2: Initialize lightweight RAG pipeline
+        pipeline = LightRAGPipeline()
         
         # Step 3: Process documents directly with extracted text
         pipeline.process_documents(pdf_texts)
         
         logger.info(f"Processed {len(pdf_texts)} pages from PDF")
         
-        # Step 4: Process all queries
-        results = pipeline.process_multiple_queries(questions, use_query_expansion=True)
+        # Step 4: Process all queries with memory cleanup
+        results = pipeline.process_multiple_queries(questions)
+        
+        # Clean up memory
+        del pipeline
+        gc.collect()
         
         # Step 5: Extract answers
         answers = [result["answer"] for result in results]
