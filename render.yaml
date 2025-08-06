@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: policyLLM-document-analyser
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT wsgi:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GROQ_API_KEY
+        sync: false

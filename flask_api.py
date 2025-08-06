@@ -12,11 +12,25 @@ from io import BytesIO
 from pypdf import PdfReader
 from rag_pipeline import RAGPipeline
 
+# Try to import CORS, make it optional for development
+try:
+    from flask_cors import CORS
+    CORS_AVAILABLE = True
+except ImportError:
+    CORS_AVAILABLE = False
+
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# Enable CORS if available
+if CORS_AVAILABLE:
+    CORS(app)
+
+# Configuration
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 def extract_text_from_pdf_url(url: str) -> list:
     """
@@ -65,8 +79,14 @@ def health_check():
     return jsonify({
         "message": "HackRX RAG API is running!",
         "status": "healthy",
-        "endpoint": "/hackrx/run"
+        "endpoint": "/hackrx/run",
+        "version": "1.0.0"
     })
+
+@app.route('/health', methods=['GET'])
+def health():
+    """Additional health check endpoint for monitoring."""
+    return jsonify({"status": "ok"}), 200
 
 @app.route('/hackrx/run', methods=['POST'])
 def process_document_and_queries():
@@ -154,4 +174,5 @@ if __name__ == '__main__':
     print("📚 Health: http://localhost:5001/")
     print("=" * 50)
     
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    # Development server
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5001)), debug=False)
