@@ -13,3 +13,4 @@ requests==2.32.4
 
 # Lightweight text processing (no heavy ML models)
 scikit-learn==1.5.0
+ 
