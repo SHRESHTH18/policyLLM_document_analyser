@@ -146,6 +146,10 @@ def process_document_and_queries():
         if len(questions) == 0:
             return jsonify({"error": "At least one question is required"}), 400
         
+        # Limit questions to prevent memory issues
+        if len(questions) > 10:
+            return jsonify({"error": "Maximum 10 questions allowed per request"}), 400
+        
         logger.info(f"Processing request with {len(questions)} questions")
         
         # Step 1: Extract text directly from PDF URL (no download needed!)
@@ -159,19 +163,31 @@ def process_document_and_queries():
         
         logger.info(f"Processed {len(pdf_texts)} pages from PDF")
         
-        # Step 4: Process all queries with memory cleanup
-        results = pipeline.process_multiple_queries(questions)
+        # Step 4: Process queries one by one to avoid memory issues
+        answers = []
         
-        # Clean up memory
+        for i, question in enumerate(questions):
+            logger.info(f"Processing question {i+1}/{len(questions)}: {question[:50]}...")
+            
+            try:
+                # Process single query
+                result = pipeline.answer_query(question)
+                answers.append(result["answer"])
+                
+                # Force garbage collection after each query to free memory
+                gc.collect()
+                
+            except Exception as e:
+                logger.error(f"Error processing question {i+1}: {e}")
+                answers.append(f"Error processing question: {str(e)}")
+        
+        # Clean up pipeline memory
         del pipeline
         gc.collect()
         
-        # Step 5: Extract answers
-        answers = [result["answer"] for result in results]
-        
         logger.info(f"Successfully processed {len(answers)} queries")
         
-        # Step 6: Return response in required format
+        # Step 5: Return response in required format
         return jsonify({"answers": answers})
         
     except Exception as e:
