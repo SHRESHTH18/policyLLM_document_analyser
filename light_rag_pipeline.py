@@ -170,8 +170,8 @@ Focus on extracting:
 •⁠ Deductibles, co-pays, and exclusions
 •⁠ Policy terms and definitions
 
-Provide only factual information in 1-2 sentences maximum." """
-        
+Provide only factual information in 1-2 sentences MAXIMUM. DO NOT USE MORE THAN 75 WORDS."""
+
         try:
             response = self.client.chat.completions.create(
                 model="llama-3.1-8b-instant",  # Fastest model
