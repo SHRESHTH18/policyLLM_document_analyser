@@ -161,7 +161,16 @@ Question: {query}
 
 Context: {context}
 
-Answer (max 100 words):"""
+You are an expert insurance policy analyst. Generate a brief, factual response that focuses on extracting key policy details for query expansion.
+
+Focus on extracting:
+•⁠ Specific numbers, percentages, and dollar amounts
+•⁠ Time periods, waiting periods, and deadlines
+•⁠ Coverage limits and conditions
+•⁠ Deductibles, co-pays, and exclusions
+•⁠ Policy terms and definitions
+
+Provide only factual information in 1-2 sentences maximum." """
         
         try:
             response = self.client.chat.completions.create(
